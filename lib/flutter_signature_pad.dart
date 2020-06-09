@@ -40,7 +40,7 @@ class _SignaturePainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
   }
 
-  @override
+  
   void paint(Canvas canvas, Size size) {
     for (int i = 0; i < points.length - 1; i++) {
       if (points[i] != null && points[i + 1] != null)
@@ -70,6 +70,7 @@ class SignatureState extends State<Signature> {
     return ClipRect(
       child: CustomPaint(
         painter: widget.backgroundPainter,
+        size: new Size( 200.0, 200.0),
         foregroundPainter: _painter,
         child: GestureDetector(
             onVerticalDragStart: _onDragStart,

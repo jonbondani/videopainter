@@ -9,6 +9,8 @@ import 'package:flick_video_player/flick_video_player.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter_widgets/flutter_widgets.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:downloads_path_provider/downloads_path_provider.dart';
 
 import 'landscape_player_controls.dart';
 import 'flutter_signature_pad.dart';
@@ -38,15 +40,37 @@ class _VideoPainterState extends State<VideoPainter> {
     Colors.black
   ];
   final _sign = GlobalKey<SignatureState>();
-
+  Directory _downloadsDirectory;
   FlickManager flickManager;
+  
   @override
   void initState() {
     super.initState();
+    initDownloadsDirectoryState();
     flickManager = FlickManager(
       videoPlayerController: VideoPlayerController.network(
           'https://github.com/GeekyAnts/flick-video-player-demo-videos/blob/master/example/the_valley_compressed.mp4?raw=true'),
     );
+  }
+
+// Platform messages are asynchronous, so we initialize in an async method.
+  Future<void> initDownloadsDirectoryState() async {
+    Directory downloadsDirectory;
+    // Platform messages may fail, so we use a try/catch PlatformException.
+    try {
+      downloadsDirectory = await DownloadsPathProvider.downloadsDirectory;
+    } on PlatformException {
+      print('Could not get the downloads directory');
+    }
+
+    // If the widget was removed from the tree while the asynchronous platform
+    // message was in flight, we want to discard the reply rather than calling
+    // setState to update our non-existent appearance.
+    if (!mounted) return;
+
+    setState(() {
+      _downloadsDirectory = downloadsDirectory;
+    });
   }
 
   @override
@@ -117,16 +141,20 @@ class _VideoPainterState extends State<VideoPainter> {
                           onPressed: () async {
                             final sign = _sign.currentState;
                             //retrieve image data, do whatever you want with it (send to server, save locally...)
-                            final image = await sign.getData();
-                            var data = await image.toByteData(
+                            final _image = await sign.getData();
+
+                            var pngBytes = await _image.toByteData(
                                 format: ui.ImageByteFormat.png);
+
                             sign.clear();
                             final encoded =
-                                base64.encode(data.buffer.asUint8List());
+                                base64.encode(pngBytes.buffer.asUint8List());
+                            showImage(context, pngBytes);
+
                             setState(() {
-                              _img = data;
+                              _img = pngBytes;
+                              debugPrint("onPressed " + encoded);
                             });
-                            debugPrint("onPressed " + encoded);
                           }),
                     ],
                   ),
@@ -202,6 +230,55 @@ class _VideoPainterState extends State<VideoPainter> {
         ],
       ),
     );
+  }
+
+ 
+
+  Future<Null> showImage(BuildContext context, ByteData pngBytes) async {
+    //var pngBytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    // Use plugin [path_provider] to export image to storage
+
+    if (await Permission.storage.request().isGranted) {
+      String path = _downloadsDirectory.path;
+      
+      await Directory('$path/videopainter').create(recursive: true);
+      File('$path/videopainter/${formattedDate()}.png')
+          .writeAsBytesSync(pngBytes.buffer.asInt8List());
+          debugPrint('ruta: $path/videopainter/${formattedDate()}.png');
+      return showDialog<Null>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text(
+                'Imagen guardada',
+                style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontWeight: FontWeight.w300,
+                    color: Theme.of(context).primaryColor,
+                    letterSpacing: 1.1),
+              ),
+              content: Image.memory(Uint8List.view(pngBytes.buffer)),
+            );
+          });
+    }
+  }
+
+  String formattedDate() {
+    DateTime dateTime = DateTime.now();
+    String dateTimeString = 'Signature_' +
+        dateTime.year.toString() +
+        dateTime.month.toString() +
+        dateTime.day.toString() +
+        dateTime.hour.toString() +
+        ':' +
+        dateTime.minute.toString() +
+        ':' +
+        dateTime.second.toString() +
+        ':' +
+        dateTime.millisecond.toString() +
+        ':' +
+        dateTime.microsecond.toString();
+    return dateTimeString;
   }
 
   getColorList() {
