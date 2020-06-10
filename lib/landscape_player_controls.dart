@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'play_toggle.dart';
 import 'package:flick_video_player/flick_video_player.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
 
 class LandscapePlayerControls extends StatelessWidget {
   const LandscapePlayerControls(
@@ -126,22 +126,6 @@ class LandscapePlayerControls extends StatelessWidget {
               ],
             ),
             autoHide: false,
-          ),
-        ),
-        Positioned(
-          right: 20,
-          top: 10,
-          child: GestureDetector(
-            onTap: () {
-              SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
-              SystemChrome.setPreferredOrientations(
-                  [DeviceOrientation.portraitUp]);
-              Navigator.pop(context);
-            },
-            child: Icon(
-              Icons.cancel,
-              size: 30,
-            ),
           ),
         ),
       ],

@@ -27,7 +27,7 @@ dependencies:
   flutter_widgets: ^0.1.12
   flick_video_player: 
   video_player: 0.10.11+1
-  downloads_path_provider: any
+  path_provider: any
   permission_handler: any
   
 

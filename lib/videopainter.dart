@@ -10,7 +10,7 @@ import 'package:video_player/video_player.dart';
 import 'package:flutter_widgets/flutter_widgets.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:downloads_path_provider/downloads_path_provider.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'landscape_player_controls.dart';
 import 'flutter_signature_pad.dart';
@@ -42,7 +42,7 @@ class _VideoPainterState extends State<VideoPainter> {
   final _sign = GlobalKey<SignatureState>();
   Directory _downloadsDirectory;
   FlickManager flickManager;
-  
+
   @override
   void initState() {
     super.initState();
@@ -58,7 +58,7 @@ class _VideoPainterState extends State<VideoPainter> {
     Directory downloadsDirectory;
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
-      downloadsDirectory = await DownloadsPathProvider.downloadsDirectory;
+      downloadsDirectory = await getApplicationDocumentsDirectory();
     } on PlatformException {
       print('Could not get the downloads directory');
     }
@@ -188,51 +188,53 @@ class _VideoPainterState extends State<VideoPainter> {
       ),
       body: Stack(
         children: <Widget>[
-          VisibilityDetector(
-            key: ObjectKey(flickManager),
-            onVisibilityChanged: (visibility) {
-              if (visibility.visibleFraction == 0 && this.mounted) {
-                flickManager.flickControlManager.autoPause();
-              } else if (visibility.visibleFraction == 1) {
-                flickManager.flickControlManager.autoResume();
-              }
-            },
-            child: Container(
-              child: FlickVideoPlayer(
-                flickManager: flickManager,
-                preferredDeviceOrientation: [
-                  DeviceOrientation.landscapeRight,
-                  DeviceOrientation.landscapeLeft
-                ],
-                systemUIOverlay: [],
-                flickVideoWithControls: FlickVideoWithControls(
-                  controls: LandscapePlayerControls(),
+          Container(
+            padding: EdgeInsets.all(5.0),
+            alignment: Alignment.bottomCenter,
+            child: VisibilityDetector(
+              key: ObjectKey(flickManager),
+              onVisibilityChanged: (visibility) {
+                if (visibility.visibleFraction == 0 && this.mounted) {
+                  flickManager.flickControlManager.autoPause();
+                } else if (visibility.visibleFraction == 1) {
+                  flickManager.flickControlManager.autoResume();
+                }
+              },
+              child: Center(
+                child: FlickVideoPlayer(
+                  flickManager: flickManager,
+                  preferredDeviceOrientation: [
+                    DeviceOrientation.landscapeRight,
+                    DeviceOrientation.landscapeLeft
+                  ],
+                  systemUIOverlay: [],
+                  flickVideoWithControls: FlickVideoWithControls(
+                    controls: LandscapePlayerControls(),
+                  ),
                 ),
               ),
             ),
           ),
-          Signature(
-            color: color,
-            key: _sign,
-            onSign: () {
-              final sign = _sign.currentState;
-              debugPrint('${sign.points.length} points in the signature');
-            },
-            backgroundPainter:
-                DrawingPainter(pointsList: this.points, watermark: "2.0"),
-            strokeWidth: strokeWidth,
+          Container(
+            padding: EdgeInsets.all(5.0),
+            height: 300,
+            alignment: Alignment.topCenter,
+            child: Signature(
+              color: color,
+              key: _sign,
+              onSign: () {
+                final sign = _sign.currentState;
+                debugPrint('${sign.points.length} points in the signature');
+              },
+              backgroundPainter:
+                  DrawingPainter(pointsList: this.points, watermark: "2.0"),
+              strokeWidth: strokeWidth,
+            ),
           ),
-          _img.buffer.lengthInBytes == 0
-              ? Container()
-              : LimitedBox(
-                  maxHeight: 200.0,
-                  child: Image.memory(_img.buffer.asUint8List())),
         ],
       ),
     );
   }
-
- 
 
   Future<Null> showImage(BuildContext context, ByteData pngBytes) async {
     //var pngBytes = await image.toByteData(format: ui.ImageByteFormat.png);
@@ -240,11 +242,11 @@ class _VideoPainterState extends State<VideoPainter> {
 
     if (await Permission.storage.request().isGranted) {
       String path = _downloadsDirectory.path;
-      
+
       await Directory('$path/videopainter').create(recursive: true);
       File('$path/videopainter/${formattedDate()}.png')
           .writeAsBytesSync(pngBytes.buffer.asInt8List());
-          debugPrint('ruta: $path/videopainter/${formattedDate()}.png');
+      debugPrint('ruta: $path/videopainter/${formattedDate()}.png');
       return showDialog<Null>(
           context: context,
           builder: (BuildContext context) {
