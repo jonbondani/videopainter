@@ -217,7 +217,7 @@ class _VideoPainterState extends State<VideoPainter> {
           ),
           Container(
             padding: EdgeInsets.all(5.0),
-            height: 300,
+            height: 200,
             alignment: Alignment.topCenter,
             child: Signature(
               color: color,
