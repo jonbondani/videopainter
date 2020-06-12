@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:animated_floatactionbuttons/animated_floatactionbuttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flick_video_player/flick_video_player.dart';
@@ -51,6 +52,13 @@ class _VideoPainterState extends State<VideoPainter> {
       videoPlayerController: VideoPlayerController.network(
           'https://github.com/GeekyAnts/flick-video-player-demo-videos/blob/master/example/the_valley_compressed.mp4?raw=true'),
     );
+    // Listen to changes in the video to re-render the controls.
+    flickManager.flickVideoManager.addListener(_videoListener);
+  }
+
+  _videoListener() {
+    // Re-render the widget to update the controls.
+    setState(() {});
   }
 
 // Platform messages are asynchronous, so we initialize in an async method.
@@ -75,6 +83,8 @@ class _VideoPainterState extends State<VideoPainter> {
 
   @override
   void dispose() {
+    // Remove the listener.
+    flickManager.flickVideoManager.removeListener(_videoListener);
     flickManager.dispose();
     super.dispose();
   }
@@ -84,107 +94,18 @@ class _VideoPainterState extends State<VideoPainter> {
     var color = Colors.red;
     var strokeWidth = 5.0;
     return Scaffold(
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Container(
-            padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(50.0),
-                color: Colors.blueGrey),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      IconButton(
-                          icon: Icon(Icons.album),
-                          onPressed: () {
-                            setState(() {
-                              if (selectedMode == SelectedMode.StrokeWidth)
-                                showBottomList = !showBottomList;
-                              selectedMode = SelectedMode.StrokeWidth;
-                            });
-                          }),
-                      IconButton(
-                          icon: Icon(Icons.opacity),
-                          onPressed: () {
-                            setState(() {
-                              if (selectedMode == SelectedMode.Opacity)
-                                showBottomList = !showBottomList;
-                              selectedMode = SelectedMode.Opacity;
-                            });
-                          }),
-                      IconButton(
-                          icon: Icon(Icons.color_lens),
-                          onPressed: () {
-                            setState(() {
-                              if (selectedMode == SelectedMode.Color)
-                                showBottomList = !showBottomList;
-                              selectedMode = SelectedMode.Color;
-                            });
-                          }),
-                      IconButton(
-                          icon: Icon(Icons.clear),
-                          onPressed: () {
-                            final sign = _sign.currentState;
-                            sign.clear();
-                            setState(() {
-                              _img = ByteData(0);
-                            });
-                            debugPrint("cleared");
-                          }),
-                      IconButton(
-                          icon: Icon(Icons.save),
-                          onPressed: () async {
-                            final sign = _sign.currentState;
-                            //retrieve image data, do whatever you want with it (send to server, save locally...)
-                            final _image = await sign.getData();
+      floatingActionButton: AnimatedFloatingActionButton(
+        //Creating menu items
+        fabButtons: fabOption(),
 
-                            var pngBytes = await _image.toByteData(
-                                format: ui.ImageByteFormat.png);
+        //Color shown when animation starts
+        colorStartAnimation: Colors.blue,
 
-                            sign.clear();
-                            final encoded =
-                                base64.encode(pngBytes.buffer.asUint8List());
-                            showImage(context, pngBytes);
+        //Color shown when animation ends
+        colorEndAnimation: Colors.cyan,
 
-                            setState(() {
-                              _img = pngBytes;
-                              debugPrint("onPressed " + encoded);
-                            });
-                          }),
-                    ],
-                  ),
-                  Visibility(
-                    child: (selectedMode == SelectedMode.Color)
-                        ? Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: getColorList(),
-                          )
-                        : Slider(
-                            value: (selectedMode == SelectedMode.StrokeWidth)
-                                ? strokeWidth
-                                : opacity,
-                            max: (selectedMode == SelectedMode.StrokeWidth)
-                                ? 50.0
-                                : 1.0,
-                            min: 0.0,
-                            onChanged: (val) {
-                              setState(() {
-                                if (selectedMode == SelectedMode.StrokeWidth)
-                                  strokeWidth = val;
-                                else
-                                  opacity = val;
-                              });
-                            }),
-                    visible: showBottomList,
-                  ),
-                ],
-              ),
-            )),
+        //Icon for FAB
+        animatedIconData: AnimatedIcons.menu_close,
       ),
       body: Stack(
         children: <Widget>[
@@ -207,9 +128,8 @@ class _VideoPainterState extends State<VideoPainter> {
                     DeviceOrientation.landscapeRight,
                     DeviceOrientation.landscapeLeft
                   ],
-                  systemUIOverlay: [],
                   flickVideoWithControls: FlickVideoWithControls(
-                    controls: LandscapePlayerControls(),
+                    controls: Container(),
                   ),
                 ),
               ),
@@ -217,7 +137,7 @@ class _VideoPainterState extends State<VideoPainter> {
           ),
           Container(
             padding: EdgeInsets.all(5.0),
-            height: 200,
+            //height: 200,
             alignment: Alignment.topCenter,
             child: Signature(
               color: color,
@@ -234,6 +154,52 @@ class _VideoPainterState extends State<VideoPainter> {
         ],
       ),
     );
+  }
+
+  List<Widget> fabOption() {
+    return <Widget>[
+      FloatingActionButton(
+          heroTag: "clear",
+          tooltip: "Limpiar",
+          child: Icon(Icons.clear),
+          onPressed: () {
+            final sign = _sign.currentState;
+            sign.clear();
+            setState(() {
+              _img = ByteData(0);
+            });
+            debugPrint("cleared");
+          }),
+      FloatingActionButton(
+          heroTag: "save",
+          tooltip: "Guardar",
+          child: Icon(Icons.save),
+          onPressed: () async {
+            final sign = _sign.currentState;
+            //retrieve image data, do whatever you want with it (send to server, save locally...)
+            final _image = await sign.getData();
+
+            var pngBytes =
+                await _image.toByteData(format: ui.ImageByteFormat.png);
+
+            sign.clear();
+            final encoded = base64.encode(pngBytes.buffer.asUint8List());
+            showImage(context, pngBytes);
+
+            setState(() {
+              _img = pngBytes;
+              debugPrint("onPressed " + encoded);
+            });
+          }),
+      FloatingActionButton(
+        child: FloatingButtonChild(
+          isPlaying: flickManager.flickVideoManager.isPlaying,
+        ),
+        onPressed: () {
+          flickManager.flickControlManager.togglePlay();
+        },
+      ),
+    ];
   }
 
   Future<Null> showImage(BuildContext context, ByteData pngBytes) async {
@@ -398,3 +364,13 @@ class DrawingPoints {
 }
 
 enum SelectedMode { StrokeWidth, Opacity, Color }
+
+class FloatingButtonChild extends StatelessWidget {
+  const FloatingButtonChild({Key key, this.isPlaying}) : super(key: key);
+  final bool isPlaying;
+
+  @override
+  Widget build(BuildContext context) {
+    return isPlaying ? Icon(Icons.pause) : Icon(Icons.play_arrow);
+  }
+}
