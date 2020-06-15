@@ -13,7 +13,6 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 
-import 'landscape_player_controls.dart';
 import 'flutter_signature_pad.dart';
 
 class VideoPainter extends StatefulWidget {
@@ -25,6 +24,7 @@ class VideoPainter extends StatefulWidget {
 
 class _VideoPainterState extends State<VideoPainter> {
   ByteData _img = ByteData(0);
+  int _pos = 0;
   Color selectedColor = Colors.red;
   Color pickerColor = Colors.red;
   double strokeWidth = 4.0;
@@ -144,7 +144,7 @@ class _VideoPainterState extends State<VideoPainter> {
               key: _sign,
               onSign: () {
                 final sign = _sign.currentState;
-                debugPrint('${sign.points.length} points in the signature');
+                //debugPrint('${sign.points.length} points in the signature');
               },
               backgroundPainter:
                   DrawingPainter(pointsList: this.points, watermark: "2.0"),
@@ -183,12 +183,15 @@ class _VideoPainterState extends State<VideoPainter> {
                 await _image.toByteData(format: ui.ImageByteFormat.png);
 
             sign.clear();
+            Duration duration = flickManager.flickVideoManager.videoPlayerValue.position;
+            debugPrint("posicion imagen en video:" + duration.inMilliseconds.toString());
             final encoded = base64.encode(pngBytes.buffer.asUint8List());
             showImage(context, pngBytes);
 
             setState(() {
               _img = pngBytes;
-              debugPrint("onPressed " + encoded);
+              _pos = duration.inMilliseconds;
+              debugPrint("onPressed (encoded):" + encoded);
             });
           }),
       FloatingActionButton(
@@ -197,8 +200,18 @@ class _VideoPainterState extends State<VideoPainter> {
         ),
         onPressed: () {
           flickManager.flickControlManager.togglePlay();
+          Duration duration = flickManager.flickVideoManager.videoPlayerValue.position;
+          debugPrint("posicion video:" + duration.inMilliseconds.toString());
         },
       ),
+      FloatingActionButton(
+          heroTag: "replay",
+          tooltip: "Recargar",
+          child: Icon(Icons.refresh),
+          onPressed: () async {
+             flickManager.flickControlManager.replay();
+
+          }),
     ];
   }
 
@@ -213,6 +226,7 @@ class _VideoPainterState extends State<VideoPainter> {
       File('$path/videopainter/${formattedDate()}.png')
           .writeAsBytesSync(pngBytes.buffer.asInt8List());
       debugPrint('ruta: $path/videopainter/${formattedDate()}.png');
+      debugPrint('imagen:SS' + Uint8List.view(pngBytes.buffer).toString() + 'EE');
       return showDialog<Null>(
           context: context,
           builder: (BuildContext context) {
@@ -233,7 +247,7 @@ class _VideoPainterState extends State<VideoPainter> {
 
   String formattedDate() {
     DateTime dateTime = DateTime.now();
-    String dateTimeString = 'Signature_' +
+    String dateTimeString = 'CapturaVideo_' +
         dateTime.year.toString() +
         dateTime.month.toString() +
         dateTime.day.toString() +
