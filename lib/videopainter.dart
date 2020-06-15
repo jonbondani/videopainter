@@ -225,8 +225,12 @@ class _VideoPainterState extends State<VideoPainter> {
       await Directory('$path/videopainter').create(recursive: true);
       File('$path/videopainter/${formattedDate()}.png')
           .writeAsBytesSync(pngBytes.buffer.asInt8List());
-      debugPrint('ruta: $path/videopainter/${formattedDate()}.png');
+      String ruta = "$path/videopainter/${formattedDate()}.png";
+      debugPrint('ruta: $ruta');
       debugPrint('imagen:SS' + Uint8List.view(pngBytes.buffer).toString() + 'EE');
+      Map map = {"ruta":ruta, "posicion": _pos};
+      String opJson = json.encode(map);
+      debugPrint('JSON:' + opJson);
       return showDialog<Null>(
           context: context,
           builder: (BuildContext context) {
