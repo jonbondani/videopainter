@@ -25,21 +25,13 @@ class VideoPainter extends StatefulWidget {
 class _VideoPainterState extends State<VideoPainter> {
   ByteData _img = ByteData(0);
   int _pos = 0;
-  Color selectedColor = Colors.red;
-  Color pickerColor = Colors.red;
-  double strokeWidth = 4.0;
+
   List<DrawingPoints> points = List();
   bool showBottomList = false;
   double opacity = 1.0;
   StrokeCap strokeCap = (Platform.isAndroid) ? StrokeCap.butt : StrokeCap.round;
   SelectedMode selectedMode = SelectedMode.StrokeWidth;
-  List<Color> colors = [
-    Colors.red,
-    Colors.green,
-    Colors.blue,
-    Colors.amber,
-    Colors.black
-  ];
+
   final _sign = GlobalKey<SignatureState>();
   Directory _downloadsDirectory;
   FlickManager flickManager;
@@ -91,8 +83,6 @@ class _VideoPainterState extends State<VideoPainter> {
 
   @override
   Widget build(BuildContext context) {
-    var color = Colors.red;
-    var strokeWidth = 5.0;
     return Scaffold(
       floatingActionButton: AnimatedFloatingActionButton(
         //Creating menu items
@@ -140,7 +130,7 @@ class _VideoPainterState extends State<VideoPainter> {
             //height: 200,
             alignment: Alignment.topCenter,
             child: Signature(
-              color: color,
+              color: Colors.blue,
               key: _sign,
               onSign: () {
                 final sign = _sign.currentState;
@@ -148,7 +138,6 @@ class _VideoPainterState extends State<VideoPainter> {
               },
               backgroundPainter:
                   DrawingPainter(pointsList: this.points, watermark: "2.0"),
-              strokeWidth: strokeWidth,
             ),
           ),
         ],
@@ -156,9 +145,26 @@ class _VideoPainterState extends State<VideoPainter> {
     );
   }
 
+  Widget colorMenuItem(Color color) {
+    return GestureDetector(
+      onTap: () {
+        debugPrint("cambiado color a " + color.toString());
+      },
+      child: ClipOval(
+        child: Container(
+          padding: const EdgeInsets.only(bottom: 5.0),
+          height: 36,
+          width: 36,
+          color: color,
+        ),
+      ),
+    );
+  }
+
   List<Widget> fabOption() {
     return <Widget>[
       FloatingActionButton(
+          mini: true,
           heroTag: "clear",
           tooltip: "Limpiar",
           child: Icon(Icons.clear),
@@ -171,6 +177,7 @@ class _VideoPainterState extends State<VideoPainter> {
             debugPrint("cleared");
           }),
       FloatingActionButton(
+          mini: true,
           heroTag: "save",
           tooltip: "Guardar",
           child: Icon(Icons.save),
@@ -183,8 +190,10 @@ class _VideoPainterState extends State<VideoPainter> {
                 await _image.toByteData(format: ui.ImageByteFormat.png);
 
             sign.clear();
-            Duration duration = flickManager.flickVideoManager.videoPlayerValue.position;
-            debugPrint("posicion imagen en video:" + duration.inMilliseconds.toString());
+            Duration duration =
+                flickManager.flickVideoManager.videoPlayerValue.position;
+            debugPrint("posicion imagen en video:" +
+                duration.inMilliseconds.toString());
             final encoded = base64.encode(pngBytes.buffer.asUint8List());
             showImage(context, pngBytes);
 
@@ -194,23 +203,47 @@ class _VideoPainterState extends State<VideoPainter> {
               debugPrint("onPressed (encoded):" + encoded);
             });
           }),
+      //FAB for picking red color
+      /*FloatingActionButton(
+        mini: true,
+        backgroundColor: Colors.blue,
+        heroTag: "color_red",
+        child: colorMenuItem(Colors.red),
+        tooltip: 'Color',
+        onPressed: () {
+          final sign = _sign.currentState;
+          sign.changeColor(Colors.red);
+        },
+      ),*/
+
+      //FAB for picking green color
+      /*FloatingActionButton(
+        mini: true,
+        backgroundColor: Colors.blue,
+        heroTag: "color_green",
+        child: colorMenuItem(Colors.green),
+        tooltip: 'Color',
+        onPressed: () {},
+      ),*/
       FloatingActionButton(
+        mini: true,
         child: FloatingButtonChild(
           isPlaying: flickManager.flickVideoManager.isPlaying,
         ),
         onPressed: () {
           flickManager.flickControlManager.togglePlay();
-          Duration duration = flickManager.flickVideoManager.videoPlayerValue.position;
+          Duration duration =
+              flickManager.flickVideoManager.videoPlayerValue.position;
           debugPrint("posicion video:" + duration.inMilliseconds.toString());
         },
       ),
       FloatingActionButton(
+          mini: true,
           heroTag: "replay",
           tooltip: "Recargar",
           child: Icon(Icons.refresh),
           onPressed: () async {
-             flickManager.flickControlManager.replay();
-
+            flickManager.flickControlManager.replay();
           }),
     ];
   }
@@ -227,8 +260,9 @@ class _VideoPainterState extends State<VideoPainter> {
           .writeAsBytesSync(pngBytes.buffer.asInt8List());
       String ruta = "$path/videopainter/${formattedDate()}.png";
       debugPrint('ruta: $ruta');
-      debugPrint('imagen:SS' + Uint8List.view(pngBytes.buffer).toString() + 'EE');
-      Map map = {"ruta":ruta, "posicion": _pos};
+      debugPrint(
+          'imagen:SS' + Uint8List.view(pngBytes.buffer).toString() + 'EE');
+      Map map = {"ruta": ruta, "posicion": _pos};
       String opJson = json.encode(map);
       debugPrint('JSON:' + opJson);
       return showDialog<Null>(
@@ -265,74 +299,6 @@ class _VideoPainterState extends State<VideoPainter> {
         ':' +
         dateTime.microsecond.toString();
     return dateTimeString;
-  }
-
-  getColorList() {
-    List<Widget> listWidget = List();
-    for (Color color in colors) {
-      listWidget.add(colorCircle(color));
-    }
-    Widget colorPicker = GestureDetector(
-      onTap: () {
-        showDialog(
-          context: context,
-          child: AlertDialog(
-            title: const Text('Pick a color!'),
-            content: SingleChildScrollView(
-              child: ColorPicker(
-                pickerColor: pickerColor,
-                onColorChanged: (color) {
-                  pickerColor = color;
-                },
-                pickerAreaHeightPercent: 0.8,
-              ),
-            ),
-            actions: <Widget>[
-              FlatButton(
-                child: const Text('Save'),
-                onPressed: () {
-                  setState(() => selectedColor = pickerColor);
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          ),
-        );
-      },
-      child: ClipOval(
-        child: Container(
-          padding: const EdgeInsets.only(bottom: 16.0),
-          height: 36,
-          width: 36,
-          decoration: BoxDecoration(
-              gradient: LinearGradient(
-            colors: [Colors.red, Colors.green, Colors.blue],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          )),
-        ),
-      ),
-    );
-    listWidget.add(colorPicker);
-    return listWidget;
-  }
-
-  Widget colorCircle(Color color) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedColor = color;
-        });
-      },
-      child: ClipOval(
-        child: Container(
-          padding: const EdgeInsets.only(bottom: 16.0),
-          height: 36,
-          width: 36,
-          color: color,
-        ),
-      ),
-    );
   }
 }
 

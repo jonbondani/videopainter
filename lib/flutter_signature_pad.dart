@@ -17,6 +17,10 @@ class Signature extends StatefulWidget {
     Key key,
   }) : super(key: key);
 
+  set color(Color color) {
+    color = color;
+  }
+
   SignatureState createState() => SignatureState();
 
   static SignatureState of(BuildContext context) {
@@ -27,7 +31,7 @@ class Signature extends StatefulWidget {
 class _SignaturePainter extends CustomPainter {
   final double strokeWidth;
   final List<Offset> points;
-  final Color strokeColor;
+  Color strokeColor;
   Paint _linePaint;
 
   _SignaturePainter(
@@ -40,7 +44,10 @@ class _SignaturePainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
   }
 
-  
+  set colorPainter(ui.Color color) {
+    strokeColor = color;
+  }
+
   void paint(Canvas canvas, Size size) {
     for (int i = 0; i < points.length - 1; i++) {
       if (points[i] != null && points[i + 1] != null)
@@ -70,7 +77,7 @@ class SignatureState extends State<Signature> {
     return ClipRect(
       child: CustomPaint(
         painter: widget.backgroundPainter,
-        size: new Size( 200.0, 200.0),
+        size: new Size(200.0, 200.0),
         foregroundPainter: _painter,
         child: GestureDetector(
             onVerticalDragStart: _onDragStart,
@@ -81,6 +88,14 @@ class SignatureState extends State<Signature> {
             onPanEnd: _onDragEnd),
       ),
     );
+  }
+
+  void changeColor(Color color) {
+    debugPrint("cambiando el color en el widget");
+    _painter.strokeColor = color;
+    setState(() {
+      _painter.strokeColor = color;
+    });
   }
 
   void _onDragStart(DragStartDetails details) {
@@ -97,9 +112,6 @@ class SignatureState extends State<Signature> {
 
     setState(() {
       _points = List.from(_points)..add(localPosition);
-      if (widget.onSign != null) {
-        widget.onSign();
-      }
     });
   }
 
@@ -120,6 +132,7 @@ class SignatureState extends State<Signature> {
   }
 
   void clear() {
+    debugPrint("cleared");
     setState(() {
       _points = [];
     });
