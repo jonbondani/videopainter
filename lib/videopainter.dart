@@ -23,6 +23,7 @@ class VideoPainter extends StatefulWidget {
 }
 
 class _VideoPainterState extends State<VideoPainter> {
+  Color colorPincel = Colors.lightBlue;
   ByteData _img = ByteData(0);
   int _pos = 0;
 
@@ -99,8 +100,35 @@ class _VideoPainterState extends State<VideoPainter> {
       ),
       body: Stack(
         children: <Widget>[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              FlatButton(
+                textColor: Color(0xFF6200EE),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text("Cancelar"),
+              ),
+              FlatButton(
+                textColor: Color(0xFF6200EE),
+                onPressed: () {
+                  // Respond to button press
+                },
+                child: Text("Video"),
+              ),
+              FlatButton(
+                textColor: Color(0xFF6200EE),
+                onPressed: () {
+                  // Respond to button press
+                },
+                child: Text("OK"),
+              ),
+            ],
+          ),
           Container(
-            padding: EdgeInsets.all(5.0),
+            padding: EdgeInsets.all(35.0),
             alignment: Alignment.bottomCenter,
             child: VisibilityDetector(
               key: ObjectKey(flickManager),
@@ -126,11 +154,11 @@ class _VideoPainterState extends State<VideoPainter> {
             ),
           ),
           Container(
-            padding: EdgeInsets.all(5.0),
+            padding: EdgeInsets.all(35.0),
             //height: 200,
             alignment: Alignment.topCenter,
             child: Signature(
-              color: Colors.blue,
+              color: this.colorPincel,
               key: _sign,
               onSign: () {
                 final sign = _sign.currentState;
@@ -165,7 +193,7 @@ class _VideoPainterState extends State<VideoPainter> {
     return <Widget>[
       FloatingActionButton(
           mini: true,
-          heroTag: "clear",
+          heroTag: "clearDraw",
           tooltip: "Limpiar",
           child: Icon(Icons.clear),
           onPressed: () {
@@ -178,7 +206,7 @@ class _VideoPainterState extends State<VideoPainter> {
           }),
       FloatingActionButton(
           mini: true,
-          heroTag: "save",
+          heroTag: "saveDraw",
           tooltip: "Guardar",
           child: Icon(Icons.save),
           onPressed: () async {
@@ -204,7 +232,7 @@ class _VideoPainterState extends State<VideoPainter> {
             });
           }),
       //FAB for picking red color
-      /*FloatingActionButton(
+      FloatingActionButton(
         mini: true,
         backgroundColor: Colors.blue,
         heroTag: "color_red",
@@ -213,8 +241,9 @@ class _VideoPainterState extends State<VideoPainter> {
         onPressed: () {
           final sign = _sign.currentState;
           sign.changeColor(Colors.red);
+          this.colorPincel = Colors.red;
         },
-      ),*/
+      ),
 
       //FAB for picking green color
       /*FloatingActionButton(
@@ -227,6 +256,7 @@ class _VideoPainterState extends State<VideoPainter> {
       ),*/
       FloatingActionButton(
         mini: true,
+        heroTag: "pauseVideo",
         child: FloatingButtonChild(
           isPlaying: flickManager.flickVideoManager.isPlaying,
         ),
@@ -239,7 +269,7 @@ class _VideoPainterState extends State<VideoPainter> {
       ),
       FloatingActionButton(
           mini: true,
-          heroTag: "replay",
+          heroTag: "replayVideo",
           tooltip: "Recargar",
           child: Icon(Icons.refresh),
           onPressed: () async {
